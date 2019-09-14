@@ -1,5 +1,5 @@
 /*
- * Interface to the RC IBus protocol
+ * Interface to the RC iBus protocol
  * 
  * Based on original work from: https://gitlab.com/timwilkinson/FlySkyIBus
  * Extended to also handle sensors/telemetry data to be sent back to the transmitter,
@@ -21,33 +21,33 @@
  */
 
 #include <Arduino.h>
-#include "IBusBM.h"
+#include "iBus.h"
 
 // pointer to the first class instance to be used to call the loop() method from timer interrupt
 // will be initiated by class constructor, then daisy channed to other class instances if we have more than one
-IBusBM* IBusBMfirst = NULL;
+IBUS* iBus_first = NULL;
 
 
 // Interrupt on timer0 - called every 1 ms
-// we call the IBusSensor.loop() here, so we are certain we respond to sensor requests in a timely matter
+// we call the iBusSensor.loop() here, so we are certain we respond to sensor requests in a timely matter
 #ifdef ARDUINO_ARCH_AVR
 SIGNAL(TIMER0_COMPA_vect) {
-  if (IBusBMfirst) IBusBMfirst->loop();  // gets new servo values if available and process any sensor data
+  if (iBus_first) iBus_first->loop();  // gets new servo values if available and process any sensor data
 }
 #elif defined _VARIANT_ARDUINO_STM32_
 void  onTimer(stimer_t *htim) {
-  if (IBusBMfirst) IBusBMfirst->loop();  // gets new servo values if available and process any sensor data
+  if (iBus_first) iBus_first->loop();  // gets new servo values if available and process any sensor data
 }
 #else
 void  onTimer() {
-  if (IBusBMfirst) IBusBMfirst->loop();  // gets new servo values if available and process any sensor data
+  if (iBus_first) iBus_first->loop();  // gets new servo values if available and process any sensor data
 }
 #endif
 
 /*
  *  supports max 14 channels in this lib (with messagelength of 0x20 there is room for 14 channels)
 
-  Example set of bytes coming over the iBUS line for setting servos: 
+  Example set of bytes coming over the iBus line for setting servos: 
     20 40 DB 5 DC 5 54 5 DC 5 E8 3 D0 7 D2 5 E8 3 DC 5 DC 5 DC 5 DC 5 DC 5 DC 5 DA F3
   Explanation
     Protocol length: 20
@@ -70,7 +70,7 @@ void  onTimer() {
  */
 
 
-void IBusBM::begin(HardwareSerial& serial, int8_t timerid, int8_t rxPin, int8_t txPin) {
+void IBUS::begin(HardwareSerial& serial, int8_t timerid, int8_t rxPin, int8_t txPin) {
   #ifdef ARDUINO_ARCH_ESP32
     serial.begin(115200, SERIAL_8N1, rxPin, txPin);
   #else
@@ -85,12 +85,12 @@ void IBusBM::begin(HardwareSerial& serial, int8_t timerid, int8_t rxPin, int8_t 
   this->chksum = 0;
   this->lchksum = 0;
 
-  // we need to process the iBUS sensor protocol handler frequently enough (at least once each ms) to ensure the response data
+  // we need to process the iBus sensor protocol handler frequently enough (at least once each ms) to ensure the response data
   // from the sensor is sent on time to the receiver
-  // if timerid==IBUSBM_NOTIMER the user is responsible for calling the loop function
-  this->IBusBMnext = IBusBMfirst;
+  // if timerid==IBUS_NOTIMER the user is responsible for calling the loop function
+  this->iBus_next = iBus_first;
 
-  if (!IBusBMfirst && timerid != IBUSBM_NOTIMER) {
+  if (!iBus_first && timerid != IBUS_NOTIMER) {
     #ifdef ARDUINO_ARCH_AVR
       // on AVR architectures Timer0 is already used for millis() - we'll just interrupt somewhere in the middle and call the TIMER0_COMPA_vect interrupt
       OCR0A = 0xAF;
@@ -115,14 +115,14 @@ void IBusBM::begin(HardwareSerial& serial, int8_t timerid, int8_t rxPin, int8_t 
       #endif
     #endif
   }
-  IBusBMfirst = this; 
+  iBus_first = this; 
 }
 
-// called from timer interrupt or mannually by user (if IBUSBM_NOTIMER set in begin())
-void IBusBM::loop(void) {
+// called from timer interrupt or mannually by user (if IBUS_NOTIMER set in begin())
+void IBUS::loop(void) {
 
-  // if we have multiple instances of IBusBM, we (recursively) call the other instances loop() function
-  if (IBusBMnext) IBusBMnext->loop(); 
+  // if we have multiple instances of iBus, we (recursively) call the other instances loop() function
+  if (iBus_next) iBus_next->loop(); 
 
   // only process data already in our UART receive buffer 
   while (stream->available() > 0) {
@@ -221,7 +221,7 @@ void IBusBM::loop(void) {
   }
 }
 
-uint16_t IBusBM::readChannel(uint8_t channelNr) {
+uint16_t IBUS::readChannel(uint8_t channelNr) {
   if (channelNr < PROTOCOL_CHANNELS) {
     return channel[channelNr];
   } else {
@@ -229,7 +229,7 @@ uint16_t IBusBM::readChannel(uint8_t channelNr) {
   }
 }
 
-uint8_t IBusBM::addSensor(uint8_t type) {
+uint8_t IBUS::addSensor(uint8_t type) {
   // add a sensor, return sensor number
   if (NumberSensors < SENSORMAX) {
     NumberSensors++;
@@ -238,7 +238,7 @@ uint8_t IBusBM::addSensor(uint8_t type) {
   return NumberSensors;
 }
 
-void IBusBM::setSensorMeasurement(uint8_t adr, uint16_t value){
+void IBUS::setSensorMeasurement(uint8_t adr, uint16_t value){
    if (adr<=NumberSensors)
      sensorValue[adr] = value;
 }
