@@ -23,7 +23,7 @@
 class IBUS {
 
 	public:
-	void begin(HardwareSerial& serial);
+	void begin(Stream& serialPort);
 	
 	uint16_t *update();	// update and return current channel values
 	
@@ -51,7 +51,7 @@ class IBUS {
 	static const uint8_t PROTOCOL_COMMAND_VALUE = 0xA0;		// command for sensor data (4 highest bits)
 	static const uint8_t SENSORMAX = 10;	// maximum number of sensors
 	
-	HardwareSerial stream;	// serial port
+	Stream* ibusSerial;	// iBus serial port
 	uint8_t rc;	// received byte
 	uint8_t state;	// iBus protocol state
 	uint32_t last;	// ms since prior message

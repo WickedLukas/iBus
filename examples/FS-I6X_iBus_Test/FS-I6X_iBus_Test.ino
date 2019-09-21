@@ -6,9 +6,9 @@
   Hardware connections to setup/test if you have a receiver with one iBus pin:
   1. Only connect the serial1 (RX1) pin to the iBus pin of the receiver 
      --> you should see the servo values on screen
-  2. Connect the serial1 (TX1) pin also to the RX1/iBus connection using an 1.2k Ohm reistor or 1N4148 diode
-     (cathode=white ring of the diode at the side of TX2) 
-     --> dummy sensor data should be sent back to the receiver (cnt_sensor also changes value)
+  2. Connect the Serial3 (TX3) pin also to the RX3/iBus connection using an 1.2k Ohm resistor or 1N4148 diode
+     (cathode = white ring of the diode at the side of TX3) 
+     --> dummy sensor data should be sent back to the receiver
 
   sensor types defined in iBus.h:
   
@@ -29,11 +29,14 @@ IBUS remoteControl;
 void setup() {
 	// initialize serial port for monitoring
 	Serial.begin(115200);
+	while (!Serial);
+	
+	// initialize serial port for iBus
+	Serial3.begin(115200, SERIAL_8N1);
+	while (!Serial3);
 
 	// iBus connected to Serial3 (Teensy 3.6: RX 7, TX 8)
 	remoteControl.begin(Serial3);
-
-	Serial.println("Start iBus monitor.");
 
 	// add two sensors
 	//remoteControl.addSensor(IBUSS_INTV);
@@ -45,22 +48,30 @@ void loop() {
 	
 	channelValues = remoteControl.update();
 	
-	// show channel values
-	for (int i=0; i<10 ; i++) {
-		Serial.print(channelValues[i]);
-		Serial.print("\t");
-	}
-	Serial.println();
-	
-	Serial.print("count =\t");
-	Serial.print(remoteControl.cnt_channelMessage);	// count of received messages
-	Serial.print("poll =\t");
-	Serial.print(remoteControl.cnt_pollMessage);	// count of sensor poll messages
-	Serial.print("sensor =\t");
-	Serial.println(remoteControl.cnt_sentMessage);	// count of sent messages
-	
 	//remoteControl.setSensorMeasurement(1, battery);
 	//remoteControl.setSensorMeasurement(2, speed);
 	
-	delay(UPDATE_INTERVAL);
+	// run serial print at a rate independent of the main loop (t0_serial = 16666 for 60 Hz update rate)
+	static uint32_t t0_serial = micros();
+	if (micros() - t0_serial > 100000) {
+		t0_serial = micros();
+			
+		// show channel values
+		for (int i=0; i<10 ; i++) {
+			Serial.print(channelValues[i]);
+			Serial.print("\t");
+		}
+		Serial.println();
+	
+		/*
+		Serial.print("count =\t");
+		Serial.print(remoteControl.cnt_channelMessage);	// count of received messages
+		Serial.print("\tpoll =\t");
+		Serial.print(remoteControl.cnt_pollMessage);	// count of sensor poll messages
+		Serial.print("\tsensor =\t");
+		Serial.println(remoteControl.cnt_sentMessage);	// count of sent messages
+		*/
+	}
+	
+	delayMicroseconds(UPDATE_INTERVAL);
 }
