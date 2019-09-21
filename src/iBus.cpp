@@ -82,7 +82,6 @@ uint16_t *IBUS::update() {
 					state = DISCARD;
 				}
 				break;
-				
 			case GET_DATA:
 				data[dataIndex++] = rc;
 				checksumCalculated -= rc;
@@ -90,12 +89,10 @@ uint16_t *IBUS::update() {
 					state = GET_CHECKSUMLOW;
 				}
 				break;
-			
 			case GET_CHECKSUMLOW:
 				checksumLow = rc;
 				state = GET_CHECKSUMHIGH;
 				break;
-
 			case GET_CHECKSUMHIGH:
 				// validate checksum
 				if (checksumCalculated == (rc << 8) + checksumLow) {
