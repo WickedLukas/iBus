@@ -46,7 +46,7 @@ Checksum: DA F3 -> calculated by adding up all previous bytes, total must be FFF
 */
 
 
-void IBUS::begin(HardwareSerial& serial, int8_t rxPin, int8_t txPin) {
+void IBUS::begin(HardwareSerial& serial) {
 	stream = serial;
 	
 	stream.begin(115200, SERIAL_8N1);

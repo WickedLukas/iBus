@@ -15,25 +15,24 @@
 
 #include <Arduino.h>
 
-// TODO: What is this needed for?
-#define IBUSS_INTV 0	// Internal voltage (in 0.01)
-#define IBUSS_TEMP 1	// Temperature (in 0.1 degrees, where 0=-40'C)
+#define IBUSS_INTV 0	// internal voltage (in 0.01)
+#define IBUSS_TEMP 1	// temperature (in 0.1 degrees, where 0=-40'C)
 #define IBUSS_RPM  2	// RPM
-#define IBUSS_EXTV 3	// External voltage (in 0.01)
+#define IBUSS_EXTV 3	// external voltage (in 0.01)
 
 class IBUS {
 
 	public:
-	void begin(HardwareSerial& serial, int8_t rxPin, int8_t txPin);
+	void begin(HardwareSerial& serial);
 	
 	uint16_t *update();	// update and return current channel values
 	
 	uint8_t addSensor(uint8_t type);	// add sensor and return sensor index
 	void setSensorMeasurement(uint8_t sensorIndex, uint16_t value);
 	
+	uint16_t cnt_channelMessage;	// count of received messages
 	uint16_t cnt_pollMessage;		// count of sensor poll messages
 	uint16_t cnt_sentMessage;		// count of sent messages
-	uint16_t cnt_channelMessage;	// count of received messages
 	
 	private:
 	enum State {GET_LENGTH, GET_DATA, GET_CHECKSUMLOW, GET_CHECKSUMHIGH, WRITE_SENSORVALUES, DISCARD};
