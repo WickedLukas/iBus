@@ -46,8 +46,8 @@ Checksum: DA F3 -> calculated by adding up all previous bytes, total must be FFF
 */
 
 
-void IBUS::begin(Stream& serialPort) {
-	ibusSerial = &serialPort;
+uint16_t *IBUS::begin(Stream& serialPort) {
+	ptr_ibusSerial = &serialPort;
 	
 	state = DISCARD;
 	last = millis();
@@ -55,10 +55,12 @@ void IBUS::begin(Stream& serialPort) {
 	dataLength = 0;
 	checksumCalculated = 0;
 	checksumLow = 0;
+	
+	return channelValues;
 }
 
-uint16_t *IBUS::update() {
-	while ((ibusSerial->available() > 0) || (state == WRITE_SENSORVALUES)) {
+void IBUS::update() {
+	while ((ptr_ibusSerial->available() > 0) || (state == WRITE_SENSORVALUES)) {
 		if (state != WRITE_SENSORVALUES) {
 			// only consider a new packet, if no one was received for over 3ms
 			uint32_t now = millis();
@@ -66,8 +68,8 @@ uint16_t *IBUS::update() {
 				state = GET_LENGTH;
 			}
 			last = now;
-		
-			rc = ibusSerial->read();
+			
+			rc = ptr_ibusSerial->read();
 		}
 		
 		switch (state) {
@@ -124,25 +126,25 @@ uint16_t *IBUS::update() {
 				switch (data[0] & 0xF0) {
 					case PROTOCOL_COMMAND_DISCOVER: // 0x80, discover sensor
 						// echo discover command: 0x04, 0x81, 0x7A, 0xFF
-						ibusSerial->write(0x04);
-						ibusSerial->write(PROTOCOL_COMMAND_DISCOVER + sensorIndex);
+						ptr_ibusSerial->write(0x04);
+						ptr_ibusSerial->write(PROTOCOL_COMMAND_DISCOVER + sensorIndex);
 						checksumCalculated = 0xFFFF - (0x04 + PROTOCOL_COMMAND_DISCOVER + sensorIndex);
 						cnt_pollMessage++;
 						break;
 					case PROTOCOL_COMMAND_TYPE: // 0x90, send sensor type
 						// echo sensor type command: 0x06 0x91 0x00 0x02 0x66 0xFF
-						ibusSerial->write(0x06);
-						ibusSerial->write(PROTOCOL_COMMAND_TYPE + sensorIndex);
-						ibusSerial->write(sensorType[sensorIndex]);
-						ibusSerial->write(0x02); // always this value - unknown
+						ptr_ibusSerial->write(0x06);
+						ptr_ibusSerial->write(PROTOCOL_COMMAND_TYPE + sensorIndex);
+						ptr_ibusSerial->write(sensorType[sensorIndex]);
+						ptr_ibusSerial->write(0x02); // always this value - unknown
 						checksumCalculated = 0xFFFF - (0x06 + PROTOCOL_COMMAND_TYPE + sensorIndex + sensorType[sensorIndex] + 2);
 						break;
 					case PROTOCOL_COMMAND_VALUE: // 0xA0, send sensor data
 						// echo sensor value command: 0x06 0x91 0x00 0x02 0x66 0xFF
-						ibusSerial->write(0x06);
-						ibusSerial->write(PROTOCOL_COMMAND_VALUE + sensorIndex);
-						ibusSerial->write(sensorValue[sensorIndex] & 0xFF);
-						ibusSerial->write(sensorValue[sensorIndex] >> 8);
+						ptr_ibusSerial->write(0x06);
+						ptr_ibusSerial->write(PROTOCOL_COMMAND_VALUE + sensorIndex);
+						ptr_ibusSerial->write(sensorValue[sensorIndex] & 0xFF);
+						ptr_ibusSerial->write(sensorValue[sensorIndex] >> 8);
 						checksumCalculated = 0xFFFF - (0x06 + PROTOCOL_COMMAND_VALUE + sensorIndex + (sensorValue[sensorIndex] >> 8) + (sensorValue[sensorIndex] & 0xFF));
 						cnt_sentMessage++;
 						break;
@@ -151,8 +153,8 @@ uint16_t *IBUS::update() {
 						break;
 				}
 				if (sensorIndex > 0) {
-					ibusSerial->write(checksumCalculated & 0xFF);
-					ibusSerial->write(checksumCalculated >> 8);
+					ptr_ibusSerial->write(checksumCalculated & 0xFF);
+					ptr_ibusSerial->write(checksumCalculated >> 8);
 				}
 				
 				state = DISCARD;
@@ -163,7 +165,6 @@ uint16_t *IBUS::update() {
 				break;
 		}
 	}
-	return channelValues;
 }
 
 uint8_t IBUS::addSensor(uint8_t type) {

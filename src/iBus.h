@@ -23,20 +23,6 @@
 class IBUS {
 
 	public:
-	void begin(Stream& serialPort);
-	
-	uint16_t *update();	// update and return current channel values
-	
-	uint8_t addSensor(uint8_t type);	// add sensor and return sensor index
-	void setSensorMeasurement(uint8_t sensorIndex, uint16_t value);
-	
-	uint16_t cnt_channelMessage;	// count of received messages
-	uint16_t cnt_pollMessage;		// count of sensor poll messages
-	uint16_t cnt_sentMessage;		// count of sent messages
-	
-	private:
-	enum State {GET_LENGTH, GET_DATA, GET_CHECKSUMLOW, GET_CHECKSUMHIGH, WRITE_SENSORVALUES, DISCARD};
-	
 	// protocol		<length><commandValue><channelValues><checksumLow><checksumHigh>
 	// data			<commandValue><channelValues>
 	// overhead		<length><checksumLow><checksumHigh>
@@ -51,14 +37,30 @@ class IBUS {
 	static const uint8_t PROTOCOL_COMMAND_VALUE = 0xA0;		// command for sensor data (4 highest bits)
 	static const uint8_t SENSORMAX = 10;	// maximum number of sensors
 	
-	Stream* ibusSerial;	// iBus serial port
+	uint16_t channelValues[PROTOCOL_CHANNELS];	// received channel values
+	
+	// variables for debugging
+	uint16_t cnt_channelMessage;	// count of received messages
+	uint16_t cnt_pollMessage;		// count of sensor poll messages
+	uint16_t cnt_sentMessage;		// count of sent messages
+	
+	uint16_t *begin(Stream& serialPort);	// initialize iBus and return pointer on received channelValues
+	void update();
+	
+	uint8_t addSensor(uint8_t type);	// add sensor and return sensor index
+	void setSensorMeasurement(uint8_t sensorIndex, uint16_t value);
+	
+	
+	private:
+	enum State {GET_LENGTH, GET_DATA, GET_CHECKSUMLOW, GET_CHECKSUMHIGH, WRITE_SENSORVALUES, DISCARD};
+	
+	Stream* ptr_ibusSerial;	// iBus serial port pointer
 	uint8_t rc;	// received byte
 	uint8_t state;	// iBus protocol state
 	uint32_t last;	// ms since prior message
 	uint8_t data[PROTOCOL_LENGTH - PROTOCOL_OVERHEAD];	// data
 	uint8_t dataIndex;	// data index
 	uint8_t dataLength;	// data length
-	uint16_t channelValues[PROTOCOL_CHANNELS];	// received channel values
 	uint16_t checksumCalculated;	// calculated checksum
 	uint8_t checksumLow;			// lower byte of received checksum
 	

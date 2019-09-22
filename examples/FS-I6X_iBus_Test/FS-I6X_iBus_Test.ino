@@ -24,7 +24,12 @@
 
 #define UPDATE_INTERVAL 100
 
-IBUS remoteControl;
+IBUS rc;
+
+// pointer on a maximum number of 10 channel values
+uint16_t *rc_channelValues;
+
+//uint8_t tempIndex;
 
 void setup() {
 	// initialize serial port for monitoring
@@ -36,40 +41,36 @@ void setup() {
 	while (!Serial3);
 
 	// iBus connected to Serial3 (Teensy 3.6: RX 7, TX 8)
-	remoteControl.begin(Serial3);
-
-	// add two sensors
-	//remoteControl.addSensor(IBUSS_INTV);
-	//remoteControl.addSensor(IBUSS_RPM);
+	rc_channelValues = rc.begin(Serial3);
+	
+	// add sensor
+	//tempIndex = rc.addSensor(IBUSS_TEMP);
 }
 
 void loop() {
-	uint16_t *channelValues;
+	rc.update();
 	
-	channelValues = remoteControl.update();
-	
-	//remoteControl.setSensorMeasurement(1, battery);
-	//remoteControl.setSensorMeasurement(2, speed);
+	//rc.setSensorMeasurement(tempIndex, 10);
 	
 	// run serial print at a rate independent of the main loop (t0_serial = 16666 for 60 Hz update rate)
 	static uint32_t t0_serial = micros();
-	if (micros() - t0_serial > 100000) {
+	if (micros() - t0_serial > 200000) {
 		t0_serial = micros();
 			
-		// show channel values
+		// print channel values
 		for (int i=0; i<10 ; i++) {
-			Serial.print(channelValues[i]);
+			Serial.print(rc_channelValues[i]);
 			Serial.print("\t");
 		}
 		Serial.println();
-	
+		
 		/*
 		Serial.print("count =\t");
-		Serial.print(remoteControl.cnt_channelMessage);	// count of received messages
+		Serial.print(rc.cnt_channelMessage);	// count of received messages
 		Serial.print("\tpoll =\t");
-		Serial.print(remoteControl.cnt_pollMessage);	// count of sensor poll messages
+		Serial.print(rc.cnt_pollMessage);	// count of sensor poll messages
 		Serial.print("\tsensor =\t");
-		Serial.println(remoteControl.cnt_sentMessage);	// count of sent messages
+		Serial.println(rc.cnt_sentMessage);	// count of sent messages
 		*/
 	}
 	
