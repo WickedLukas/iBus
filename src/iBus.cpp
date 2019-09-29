@@ -56,7 +56,7 @@ uint16_t *IBUS::begin(Stream& serialPort) {
 	checksumCalculated = 0;
 	checksumLow = 0;
 	
-	return channelValues;
+	return channelValue;
 }
 
 void IBUS::update() {
@@ -104,7 +104,7 @@ void IBUS::update() {
 					if (data[0] == PROTOCOL_COMMAND40) {
 						// extract channel values
 						for (uint8_t i = 1; i < PROTOCOL_CHANNELS * 2 + 1; i += 2) {
-							channelValues[i / 2] = data[i] | (data[i + 1] << 8);
+							channelValue[i / 2] = data[i] | (data[i + 1] << 8);
 						}
 						cnt_channelMessage++;
 					} 

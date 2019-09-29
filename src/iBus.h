@@ -37,7 +37,7 @@ class IBUS {
 	static const uint8_t PROTOCOL_COMMAND_VALUE = 0xA0;		// command for sensor data (4 highest bits)
 	static const uint8_t SENSORMAX = 10;	// maximum number of sensors
 	
-	uint16_t channelValues[PROTOCOL_CHANNELS];	// received channel values
+	uint16_t channelValue[PROTOCOL_CHANNELS];	// received channel values
 	
 	// variables for debugging
 	uint16_t cnt_channelMessage;	// count of received messages
